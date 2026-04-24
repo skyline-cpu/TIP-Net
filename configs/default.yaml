@@ -1,0 +1,76 @@
+# TIP-Net Default Configuration
+# Temporal Inconsistency and Prototype Contrastive Network
+
+# ─── Data ───────────────────────────────────────────────────────────────────
+data:
+  data_root: "./dataset"          # root dir with real/ and fake/ subfolders
+  frames_dir: "./frames"          # where preprocess.py saves extracted frames
+  frames_per_snippet: 8           # L  — frames per temporal snippet (ablation target)
+  num_snippets: 16                # T  — fixed number of snippets per video
+  image_size: 224                 # resize target for each frame
+  split_ratio: 0.8                # train / val ratio
+  num_workers: 4
+  pin_memory: true
+  balance_dataset: true           # oversample minority class in training
+  face_crop: true                 # whether to crop face region (requires mtcnn)
+  face_margin: 0.3                # margin around detected face box
+
+# ─── Backbone ───────────────────────────────────────────────────────────────
+backbone:
+  name: "xception"                # choices: xception | vit_base | dino_vit | efficientnet
+  pretrained: true
+  freeze_at_start: false          # freeze backbone for first N epochs
+  freeze_epochs: 0
+  output_dim: 2048                # raw output dim before snippet_proj
+  dropout: 0.0
+
+# ─── Model ──────────────────────────────────────────────────────────────────
+model:
+  snippet_dim: 512                # D  — snippet embedding dim
+  proj_dim: 128                   # D' — projection dim for contrastive
+  num_prototypes: 8               # K  — number of real prototypes
+  memory_size: 4096               # memory bank capacity
+  memory_momentum: 0.999          # EMA momentum for memory
+  tmm_order: 2                    # k  — order of temporal difference (ablation)
+  attention_heads: 4              # multi-head attention in MSA-L
+  lstm_layers: 2                  # Bi-LSTM layers
+  dropout: 0.3
+  temperature: 0.07               # τ  — contrastive temperature
+
+# ─── Contrastive (ECL / ReweightedLoss) ─────────────────────────────────────
+contrastive:
+  enable: true                    # add ECL-style contrastive on snippet projections
+  gamma: 1.5                      # adaptive weight power
+  adaptive_weight: true
+
+# ─── Loss weights ────────────────────────────────────────────────────────────
+loss:
+  gamma1: 0.5                     # Lsim weight
+  gamma2: 1.0                     # Lproto weight
+  gamma3: 0.8                     # Lloc weight
+  gamma4: 0.3                     # contrastive loss weight (ECL-style)
+  top_k: 5                        # Top-K for bootstrapping pseudo-labels
+  label_smoothing: 0.05
+
+# ─── Training ────────────────────────────────────────────────────────────────
+train:
+  epochs: 100
+  batch_size: 8                   # videos per batch (each video → variable T snippets)
+  lr: 1.0e-4
+  min_lr: 1.0e-6
+  weight_decay: 1.0e-4
+  warmup_epochs: 5
+  grad_clip: 1.0
+  update_proto_freq: 5            # update K-Means prototypes every N epochs
+  eval_freq: 1
+  save_dir: "./checkpoints"
+  log_dir: "./logs"
+  amp: true                       # use torch.cuda.amp (FP16) to save VRAM
+  accumulate_grad: 2              # gradient accumulation steps
+
+# ─── Test ────────────────────────────────────────────────────────────────────
+test:
+  batch_size: 4
+  threshold: 0.5
+  visualize: false
+  save_dir: "./results"
