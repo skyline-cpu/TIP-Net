@@ -118,8 +118,5 @@ Outputs include:
 - Video-level metrics  
 - Snippet-level localization results  
 
----
 
-
----
 
