@@ -6,7 +6,7 @@
 Official PyTorch implementation of the paper:
 
 > **Partially Manipulated DeepFake Video Detection and Localization via Weakly Supervised Learning**  
-> *IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI), 2026*
+
 
 ---
 
